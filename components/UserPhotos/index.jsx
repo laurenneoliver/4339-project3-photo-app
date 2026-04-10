@@ -1,0 +1,145 @@
+import React, { useEffect, useState } from 'react';
+import {
+  Box,
+  Card,
+  CardContent,
+  CardMedia,
+  CircularProgress,
+  Divider,
+  Link as MuiLink,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { Link, useParams } from 'react-router-dom';
+import api from '../../lib/api';
+
+import './styles.css';
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return dateString;
+  }
+
+  return date.toLocaleString();
+}
+
+function UserPhotos() {
+  const { userId } = useParams();
+  const [photos, setPhotos] = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function fetchData() {
+      try {
+        setLoading(true);
+        setError('');
+
+        const [userResponse, photosResponse] = await Promise.all([
+          api.get(`/user/${userId}`),
+          api.get(`/photosOfUser/${userId}`),
+        ]);
+
+        if (!ignore) {
+          setUser(userResponse.data);
+          setPhotos(photosResponse.data);
+        }
+      } catch (err) {
+        if (!ignore) {
+          setUser(null);
+          setPhotos([]);
+          setError('Unable to load this user\'s photos.');
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchData();
+
+    return () => {
+      ignore = true;
+    };
+  }, [userId]);
+
+  if (loading) {
+    return <CircularProgress size={28} />;
+  }
+
+  if (error) {
+    return <Typography color="error">{error}</Typography>;
+  }
+
+  if (!user) {
+    return <Typography>User not found.</Typography>;
+  }
+
+  return (
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Photos of {user.first_name} {user.last_name}
+      </Typography>
+
+      {photos.length === 0 ? (
+        <Typography>No photos available for this user.</Typography>
+      ) : (
+        <Stack spacing={3}>
+          {photos.map((photo) => (
+            <Card key={photo._id}>
+              <CardMedia
+                component="img"
+                image={`/images/${photo.file_name}`}
+                alt={`Uploaded by ${user.first_name} ${user.last_name}`}
+              />
+              <CardContent>
+                <Typography variant="subtitle1" gutterBottom>
+                  Posted: {formatDate(photo.date_time)}
+                </Typography>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Typography variant="h6" gutterBottom>
+                  Comments
+                </Typography>
+
+                {photo.comments && photo.comments.length > 0 ? (
+                  <Stack spacing={2}>
+                    {photo.comments.map((comment) => (
+                      <Box key={comment._id}>
+                        <Typography variant="body2" color="text.secondary">
+                          {formatDate(comment.date_time)}
+                        </Typography>
+                        <Typography variant="body1">
+                          <MuiLink
+                            component={Link}
+                            to={`/users/${comment.user._id}`}
+                            underline="hover"
+                          >
+                            {comment.user.first_name} {comment.user.last_name}
+                          </MuiLink>
+                          {': '}
+                          {comment.comment}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography color="text.secondary">No comments yet.</Typography>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
+      )}
+    </Box>
+  );
+}
+
+export default UserPhotos;
