@@ -16,6 +16,8 @@ const app = express();
 const port = process.env.PORT || 3001;
 const mongoUrl = process.env.MONGO_URL || "mongodb://127.0.0.1/project3";
 
+const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret";
+
 // Enable CORS for frontend running on a different port
 app.use(cors());
 
@@ -24,7 +26,7 @@ app.use(express.json());
 
 app.use(
   session({
-    secret: "photo-sharing-secret",
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
   }),
