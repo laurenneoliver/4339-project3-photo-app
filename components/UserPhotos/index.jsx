@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Box,
   Card,
@@ -11,8 +11,8 @@ import {
   Typography,
 } from '@mui/material';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
-
 import './styles.css';
 
 function formatDate(dateString) {
@@ -27,54 +27,23 @@ function formatDate(dateString) {
 
 function UserPhotos() {
   const { userId } = useParams();
-  const [photos, setPhotos] = useState([]);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    let ignore = false;
+  const {data: user, isPending: userPending, isError: userError} = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => api.get(`/user/${userId}`).then((res) => res.data),
+  });
 
-    async function fetchData() {
-      try {
-        setLoading(true);
-        setError('');
+  const {data: photos = [], isPending: photosPending, isError: photosError} = useQuery({
+    queryKey: ['photos', userId],
+    queryFn: () => api.get(`/photosOfUser/${userId}`).then((res) => res.data),
+  });
 
-        const [userResponse, photosResponse] = await Promise.all([
-          api.get(`/user/${userId}`),
-          api.get(`/photosOfUser/${userId}`),
-        ]);
-
-        if (!ignore) {
-          setUser(userResponse.data);
-          setPhotos(photosResponse.data);
-        }
-      } catch (err) {
-        if (!ignore) {
-          setUser(null);
-          setPhotos([]);
-          setError('Unable to load this user\'s photos.');
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    }
-
-    fetchData();
-
-    return () => {
-      ignore = true;
-    };
-  }, [userId]);
-
-  if (loading) {
+  if (userPending || photosPending) {
     return <CircularProgress size={28} />;
   }
 
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
+  if (userError || photosError) {
+    return <Typography color="error">Unable to load this user's photos.</Typography>;
   }
 
   if (!user) {
