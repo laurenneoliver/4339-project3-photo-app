@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   CardMedia,
@@ -8,9 +9,11 @@ import {
   Divider,
   Link as MuiLink,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 
 import './styles.css';
@@ -25,56 +28,74 @@ function formatDate(dateString) {
   return date.toLocaleString();
 }
 
+function CommentForm({ photoId }) {
+  const [comment, setComment] = useState('');
+  const [error, setError] = useState('');
+  const queryClient = useQueryClient();
+  const {userId} = useParams();
+
+  const commentMutation = useMutation({
+    mutationFn: (text) => api.post(`/commentsOfPhoto/${photoId}`, { comment: text }).then((res) => res.data),
+    onSuccess: () => {
+      setComment('');
+      setError('');
+      queryClient.invalidateQueries({ queryKey: ['photos', userId] });
+    },
+    onError: (err) => {
+      setError(err.response?.data || 'Failed to add comment. Please try again.');
+    },
+  });
+
+  function handleSubmit() {
+    if (!comment.trim()) {
+      setError('Comment cannot be empty.');
+      return;
+    }
+    commentMutation.mutate(comment);
+  }
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <TextField
+        label="Add a comment"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        fullWidth
+        multiline
+        rows={3}
+      />
+
+      {error && (
+        <Typography color={"error"} variant="body2" sx={{ mt: 1 }}>
+          {error}
+        </Typography>
+      )}
+      <Button variant="contained" sx={{ mt: 1 }} onClick={handleSubmit} disabled={commentMutation.isPending}>
+        {commentMutation.isPending ? 'Posting...' : 'Post Comment'}
+      </Button>
+    </Box>
+  );
+}
+
 function UserPhotos() {
   const { userId } = useParams();
-  const [photos, setPhotos] = useState([]);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    let ignore = false;
+  const { data: user, isPending: userPending, isError: userError } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => api.get(`/user/${userId}`).then((res) => res.data),
+  });
 
-    async function fetchData() {
-      try {
-        setLoading(true);
-        setError('');
+  const { data: photos=[], isPending: photosPending, isError: photosError } = useQuery({
+    queryKey: ['photos', userId],
+    queryFn: () => api.get(`/photosOfUser/${userId}`).then((res) => res.data),
+  });
 
-        const [userResponse, photosResponse] = await Promise.all([
-          api.get(`/user/${userId}`),
-          api.get(`/photosOfUser/${userId}`),
-        ]);
-
-        if (!ignore) {
-          setUser(userResponse.data);
-          setPhotos(photosResponse.data);
-        }
-      } catch (err) {
-        if (!ignore) {
-          setUser(null);
-          setPhotos([]);
-          setError('Unable to load this user\'s photos.');
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    }
-
-    fetchData();
-
-    return () => {
-      ignore = true;
-    };
-  }, [userId]);
-
-  if (loading) {
+  if (userPending || photosPending) {
     return <CircularProgress size={28} />;
   }
 
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
+  if (userError || photosError) {
+    return <Typography color="error">Unable to load this user's photos.</Typography>;
   }
 
   if (!user) {
@@ -133,6 +154,10 @@ function UserPhotos() {
                 ) : (
                   <Typography color="text.secondary">No comments yet.</Typography>
                 )}
+
+                <Divider sx={{ my: 2 }} />
+                <CommentForm photoId={photo._id} />
+
               </CardContent>
             </Card>
           ))}
