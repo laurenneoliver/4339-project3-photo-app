@@ -15,7 +15,6 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
-
 import './styles.css';
 
 function formatDate(dateString) {
