@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   CardMedia,
@@ -8,10 +9,11 @@ import {
   Divider,
   Link as MuiLink,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import { Link, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import './styles.css';
 
@@ -25,15 +27,64 @@ function formatDate(dateString) {
   return date.toLocaleString();
 }
 
+function CommentForm({ photoId }) {
+  const [comment, setComment] = useState('');
+  const [error, setError] = useState('');
+  const queryClient = useQueryClient();
+  const {userId} = useParams();
+
+  const commentMutation = useMutation({
+    mutationFn: (text) => api.post(`/commentsOfPhoto/${photoId}`, { comment: text }).then((res) => res.data),
+    onSuccess: () => {
+      setComment('');
+      setError('');
+      queryClient.invalidateQueries({ queryKey: ['photos', userId] });
+    },
+    onError: (err) => {
+      setError(err.response?.data || 'Failed to add comment. Please try again.');
+    },
+  });
+
+  function handleSubmit() {
+    if (!comment.trim()) {
+      setError('Comment cannot be empty.');
+      return;
+    }
+    commentMutation.mutate(comment);
+  }
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <TextField
+        label="Add a comment"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        fullWidth
+        multiline
+        rows={3}
+      />
+
+      {error && (
+        <Typography color={"error"} variant="body2" sx={{ mt: 1 }}>
+          {error}
+        </Typography>
+      )}
+      <Button variant="contained" sx={{ mt: 1 }} onClick={handleSubmit} disabled={commentMutation.isPending}>
+        {commentMutation.isPending ? 'Posting...' : 'Post Comment'}
+      </Button>
+    </Box>
+  );
+}
+
 function UserPhotos() {
   const { userId } = useParams();
 
-  const {data: user, isPending: userPending, isError: userError} = useQuery({
+  const { data: user, isPending: userPending, isError: userError } = useQuery({
     queryKey: ['user', userId],
     queryFn: () => api.get(`/user/${userId}`).then((res) => res.data),
   });
 
-  const {data: photos = [], isPending: photosPending, isError: photosError} = useQuery({
+  const { data: photos=[], isPending: photosPending, isError: photosError } = useQuery({
     queryKey: ['photos', userId],
     queryFn: () => api.get(`/photosOfUser/${userId}`).then((res) => res.data),
   });
@@ -102,6 +153,10 @@ function UserPhotos() {
                 ) : (
                   <Typography color="text.secondary">No comments yet.</Typography>
                 )}
+
+                <Divider sx={{ my: 2 }} />
+                <CommentForm photoId={photo._id} />
+
               </CardContent>
             </Card>
           ))}
