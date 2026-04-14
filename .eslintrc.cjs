@@ -3,24 +3,29 @@ module.exports = {
     browser: true,
     es2021: true,
   },
-  extends: ['airbnb', 'airbnb/hooks'],
+  extends: ["airbnb", "airbnb/hooks"],
   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
+    ecmaVersion: "latest",
+    sourceType: "module",
     ecmaFeatures: {
       jsx: true,
     },
   },
   settings: {
     react: {
-      version: 'detect',
+      version: "detect",
     },
   },
   rules: {
-    'react/react-in-jsx-scope': 'off',
-    'import/extensions': 'off',
-    'react/jsx-one-expression-per-line': 'off',
-    'no-underscore-dangle': 'off',
-    'no-plusplus': 'off',
+    "react/react-in-jsx-scope": "off",
+    "import/extensions": "off",
+    "react/jsx-one-expression-per-line": "off",
+    "no-underscore-dangle": "off",
+    "no-plusplus": "off",
+    "react/prop-types": "off",
+    "react/jsx-no-bind": "off",
+    camelcase: "off",
+    "no-param-reassign": "off",
+    "no-console": "off",
   },
 };
