@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Box,
   Button,
@@ -7,52 +7,23 @@ import {
   Typography,
 } from '@mui/material';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import api from '../../lib/api';
-
 import './styles.css';
 
 function UserDetail() {
   const { userId } = useParams();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const {data: user, isPending, isError} = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => api.get(`/user/${userId}`).then((res) => res.data),
+  });
 
-  useEffect(() => {
-    let ignore = false;
-
-    async function fetchUser() {
-      try {
-        setLoading(true);
-        setError('');
-        const response = await api.get(`/user/${userId}`);
-        if (!ignore) {
-          setUser(response.data);
-        }
-      } catch (err) {
-        if (!ignore) {
-          setUser(null);
-          setError('User not found.');
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    }
-
-    fetchUser();
-
-    return () => {
-      ignore = true;
-    };
-  }, [userId]);
-
-  if (loading) {
+  if (isPending) {
     return <CircularProgress size={28} />;
   }
 
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
+  if (isError) {
+    return <Typography color="error">User not found.</Typography>;
   }
 
   if (!user) {
