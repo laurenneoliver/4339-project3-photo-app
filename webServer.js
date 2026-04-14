@@ -19,7 +19,10 @@ const mongoUrl = process.env.MONGO_URL || "mongodb://127.0.0.1/project3";
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret";
 
 // Enable CORS for frontend running on a different port
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true,
+}));
 
 // Middleware to parse JSON bodies
 app.use(express.json());
