@@ -1,6 +1,5 @@
-
 // eslint-disable-next-line import/no-extraneous-dependencies
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 /**
  * Define the Mongoose Schema for a Comment.
@@ -31,7 +30,7 @@ const photoSchema = new mongoose.Schema({
 /**
  * Create a Mongoose Model for a Photo using the photoSchema.
  */
-const Photo = mongoose.model("Photo", photoSchema);
+const Photo = mongoose.model('Photo', photoSchema);
 
 /**
  * Make this available to our application.

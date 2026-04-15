@@ -13,7 +13,7 @@ import './styles.css';
 
 function UserDetail() {
   const { userId } = useParams();
-  const {data: user, isPending, isError} = useQuery({
+  const { data: user, isPending, isError } = useQuery({
     queryKey: ['user', userId],
     queryFn: () => api.get(`/user/${userId}`).then((res) => res.data),
   });

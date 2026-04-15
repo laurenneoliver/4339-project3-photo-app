@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import ReactDOM from 'react-dom/client';
 import { Grid, Paper, Typography } from '@mui/material';
@@ -9,7 +9,6 @@ import {
   Navigate,
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
 
 import './styles/main.css';
 import TopBar from './components/TopBar';
@@ -28,8 +27,7 @@ function Home() {
   );
 }
 
-function Root({loggedInUser, setLoggedInUser}) {
-
+function Root({ loggedInUser, setLoggedInUser }) {
   if (!loggedInUser) {
     return <Navigate to="/login-register" replace />;
   }
@@ -38,7 +36,7 @@ function Root({loggedInUser, setLoggedInUser}) {
     <div>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <TopBar loggedInUser={loggedInUser}  setLoggedInUser={setLoggedInUser}/>
+          <TopBar loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />
         </Grid>
         <div className="main-topbar-buffer" />
         <Grid item xs={12} sm={3}>
@@ -56,19 +54,19 @@ function Root({loggedInUser, setLoggedInUser}) {
   );
 }
 
-function App () { 
+function App() {
   const [loggedInUser, setLoggedInUser] = useState(null);
 
   const router = createBrowserRouter([
     {
       path: '/login-register',
-      element: loggedInUser 
-      ? <Navigate to={`/users/${loggedInUser._id}`} replace /> 
-      : <LoginRegister setLoggedInUser={setLoggedInUser} />,
+      element: loggedInUser
+        ? <Navigate to={`/users/${loggedInUser._id}`} replace />
+        : <LoginRegister setLoggedInUser={setLoggedInUser} />,
     },
     {
       path: '/',
-      element: <Root loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser}/>,
+      element: <Root loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />,
       children: [
         { index: true, element: <Home /> },
         { path: 'users', element: <Home /> },
@@ -83,7 +81,8 @@ function App () {
 
 const root = ReactDOM.createRoot(document.getElementById('photoshareapp'));
 root.render(
-<QueryClientProvider client={queryClient}>
-  <App />
+  <QueryClientProvider client={queryClient}>
+    <App />
 
-</QueryClientProvider>);
+  </QueryClientProvider>,
+);

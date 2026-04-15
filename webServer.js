@@ -1,28 +1,30 @@
-import express from "express";
-import cors from "cors";
-import mongoose from "mongoose";
-import session from "express-session";
-import bcrypt from "bcrypt";
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import session from 'express-session';
+import bcrypt from 'bcrypt';
 
 // Used when you implement the TODO handlers below.
 // eslint-disable-next-line no-unused-vars
-import User from "./schema/user.js";
+import User from './schema/user.js';
 // eslint-disable-next-line no-unused-vars
-import Photo from "./schema/photo.js";
+import Photo from './schema/photo.js';
 
 const app = express();
 
 // define these in env and import in this file
 const port = process.env.PORT || 3001;
-const mongoUrl = process.env.MONGO_URL || "mongodb://127.0.0.1/project3";
+const mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1/project3';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret";
+const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret';
 
 // Enable CORS for frontend running on a different port
-app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+  }),
+);
 
 // Middleware to parse JSON bodies
 app.use(express.json());
@@ -39,12 +41,12 @@ app.use(
 mongoose.connect(mongoUrl);
 
 mongoose.connection.on(
-  "error",
-  console.error.bind(console, "MongoDB connection error:"),
+  'error',
+  console.error.bind(console, 'MongoDB connection error:'),
 );
 
-mongoose.connection.once("open", () => {
-  console.log("Connected to MongoDB");
+mongoose.connection.once('open', () => {
+  console.log('Connected to MongoDB');
 });
 
 function isValidObjectId(id) {
@@ -53,33 +55,33 @@ function isValidObjectId(id) {
 
 function requireLogin(req, res, next) {
   if (!req.session.user_id) {
-    return res.status(401).send("Not logged in");
+    return res.status(401).send('Not logged in');
   }
-  next();
+  return next();
 }
 
 /**
  * POST /admin/login
  * Logs in an admin user.
  */
-app.post("/admin/login", async (req, res) => {
+app.post('/admin/login', async (req, res) => {
   try {
     const { login_name, password } = req.body;
 
     if (!login_name || !password) {
-      return res.status(400).send("Missing login_name or password");
+      return res.status(400).send('Missing login_name or password');
     }
 
     const user = await User.findOne({ login_name });
 
     if (!user) {
-      return res.status(400).send("Invalid login name or password");
+      return res.status(400).send('Invalid login name or password');
     }
 
     const isMatch = await bcrypt.compare(password, user.password_digest);
 
     if (!isMatch) {
-      return res.status(400).send("Invalid login name or password");
+      return res.status(400).send('Invalid login name or password');
     }
 
     req.session.user_id = user._id;
@@ -103,16 +105,16 @@ app.post("/admin/login", async (req, res) => {
  * Logs out an admin user.
  */
 
-app.post("/admin/logout", (req, res) => {
+app.post('/admin/logout', (req, res) => {
   if (!req.session.user_id) {
-    return res.status(400).send("No user currently logged in");
+    return res.status(400).send('No user currently logged in');
   }
 
-  req.session.destroy((err) => {
+  return req.session.destroy((err) => {
     if (err) {
-      return res.status(500).send("Failed to log out");
+      return res.status(500).send('Failed to log out');
     }
-    return res.status(200).send("Logged out");
+    return res.status(200).send('Logged out');
   });
 });
 
@@ -121,7 +123,7 @@ app.post("/admin/logout", (req, res) => {
  * Creates a new user.
  */
 
-app.post("/user", async (req, res) => {
+app.post('/user', async (req, res) => {
   try {
     const {
       login_name,
@@ -136,13 +138,13 @@ app.post("/user", async (req, res) => {
     if (!login_name || !password || !first_name || !last_name) {
       return res
         .status(400)
-        .send("login_name, password, first_name, and last_name are required");
+        .send('login_name, password, first_name, and last_name are required');
     }
 
     const existingUser = await User.findOne({ login_name });
 
     if (existingUser) {
-      return res.status(400).send("login_name already exists");
+      return res.status(400).send('login_name already exists');
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -175,9 +177,9 @@ app.post("/user", async (req, res) => {
  * GET /user/list
  * Returns the list of users.
  */
-app.get("/user/list", requireLogin, async (req, res) => {
+app.get('/user/list', requireLogin, async (req, res) => {
   try {
-    const users = await User.find({}, "_id first_name last_name");
+    const users = await User.find({}, '_id first_name last_name');
 
     const result = users.map((user) => ({
       _id: user._id,
@@ -195,18 +197,18 @@ app.get("/user/list", requireLogin, async (req, res) => {
  * GET /user/:id
  * Returns the details of one user.
  */
-app.get("/user/:id", requireLogin, async (req, res) => {
+app.get('/user/:id', requireLogin, async (req, res) => {
   try {
     const userId = req.params.id;
 
     if (!isValidObjectId(userId)) {
-      return res.status(400).send("Invalid user id");
+      return res.status(400).send('Invalid user id');
     }
 
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).send("User not found");
+      return res.status(404).send('User not found');
     }
 
     return res.json({
@@ -226,12 +228,12 @@ app.get("/user/:id", requireLogin, async (req, res) => {
  * GET /photosOfUser/:id
  * Returns all photos of the given user.
  */
-app.get("/photosOfUser/:id", requireLogin, async (req, res) => {
+app.get('/photosOfUser/:id', requireLogin, async (req, res) => {
   try {
     const userId = req.params.id;
 
     if (!isValidObjectId(userId)) {
-      return res.status(400).send("Invalid user id");
+      return res.status(400).send('Invalid user id');
     }
 
     // TODO:
@@ -245,11 +247,11 @@ app.get("/photosOfUser/:id", requireLogin, async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).send("User not found");
+      return res.status(404).send('User not found');
     }
 
     const photos = await Photo.find({ user_id: userId });
-    const users = await User.find({}, "_id first_name last_name");
+    const users = await User.find({}, '_id first_name last_name');
 
     const userMap = {};
     users.forEach((userDoc) => {
@@ -287,23 +289,23 @@ app.get("/photosOfUser/:id", requireLogin, async (req, res) => {
  * Stores comment with timestamp and session user_id.
  */
 
-app.post("/commentsOfPhoto/:photoId", requireLogin, async (req, res) => {
+app.post('/commentsOfPhoto/:photoId', requireLogin, async (req, res) => {
   try {
-    const photoId = req.params.photoId;
+    const { photoId } = req.params;
     const { comment } = req.body;
 
     if (!isValidObjectId(photoId)) {
-      return res.status(400).send("Invalid photo id");
+      return res.status(400).send('Invalid photo id');
     }
 
     if (!comment || !comment.trim()) {
-      return res.status(400).send("Comment text is required");
+      return res.status(400).send('Comment text is required');
     }
 
     const photo = await Photo.findById(photoId);
 
     if (!photo) {
-      return res.status(404).send("Photo not found");
+      return res.status(404).send('Photo not found');
     }
 
     photo.comments.push({
@@ -314,7 +316,7 @@ app.post("/commentsOfPhoto/:photoId", requireLogin, async (req, res) => {
 
     await photo.save();
 
-    return res.status(200).send("Comment added");
+    return res.status(200).send('Comment added');
   } catch (err) {
     return res.status(500).send(err.message);
   }

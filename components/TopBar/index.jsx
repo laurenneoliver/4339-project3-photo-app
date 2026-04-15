@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   AppBar,
   Box,
@@ -6,11 +6,11 @@ import {
   CircularProgress,
   Toolbar,
   Typography,
-} from "@mui/material";
-import { useLocation, matchPath, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "../../lib/api";
-import "./styles.css";
+} from '@mui/material';
+import { useLocation, matchPath, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../lib/api';
+import './styles.css';
 
 function TopBar({ loggedInUser, setLoggedInUser }) {
   const location = useLocation();
@@ -20,8 +20,8 @@ function TopBar({ loggedInUser, setLoggedInUser }) {
   const { data: contextUser, isPending: loading } = useQuery({
     queryKey: ['topbar-user', location.pathname],
     queryFn: async () => {
-      const photoMatch = matchPath("/users/:userId/photos", location.pathname);
-      const detailMatch = matchPath("/users/:userId", location.pathname);
+      const photoMatch = matchPath('/users/:userId/photos', location.pathname);
+      const detailMatch = matchPath('/users/:userId', location.pathname);
       const matchedUserId = photoMatch?.params.userId || detailMatch?.params.userId;
 
       if (!matchedUserId) {
@@ -45,7 +45,7 @@ function TopBar({ loggedInUser, setLoggedInUser }) {
 
   function getContextText() {
     if (!contextUser) {
-      return location.pathname === "/users" ? "User List" : "Photo Sharing App";
+      return location.pathname === '/users' ? 'User List' : 'Photo Sharing App';
     }
     const fullName = `${contextUser.user.first_name} ${contextUser.user.last_name}`;
     return contextUser.isPhoto ? `Photos of ${fullName}` : fullName;
@@ -55,7 +55,7 @@ function TopBar({ loggedInUser, setLoggedInUser }) {
     <AppBar className="topbar-appBar" position="fixed">
       <Toolbar className="topbar-toolbar">
         <Typography variant="h6" color="inherit">
-          {loggedInUser ? `Hi, ${loggedInUser.first_name}` : "Photo Sharing App"}
+          {loggedInUser ? `Hi, ${loggedInUser.first_name}` : 'Photo Sharing App'}
         </Typography>
         <Box className="topbar-context">
           {loading ? (
